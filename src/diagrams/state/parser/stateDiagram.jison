@@ -32,7 +32,7 @@
 ","               return ',';
 ";"               return 'NL';
 "stateDiagram"    return 'DIAGRAM_START';
-":"([^#\n;]+)     { yytext = yy.lexer.matches[1].trim(); return 'TRANSITION_TEXT'; }
+":"([^#\n;]+)     { yytext = yy.lexer.matches[1].trim(); return 'TEXT_AFTER_COLON'; }
 [^\+\->\n,;:{}]+    { yytext = yytext.trim(); return 'STATE'; }
 "->>"             return 'SOLID_ARROW';
 "-->>"            return 'DOTTED_ARROW';
@@ -72,10 +72,11 @@ line
 
 statement
 	: transition 'NL'
+	| STATE TEXT_AFTER_COLON 'NL' { yy.apply({type: 'addState', name:$1, description: $2 }); $$ = $1 }
   ;
 
 transition
-  : state transition_type state TRANSITION_TEXT {yy.apply({type: 'addTransition', from: $1, to: $3, description: $4});}
+  : state transition_type state TEXT_AFTER_COLON {yy.apply({type: 'addTransition', from: $1, to: $3, description: $4});}
   | state transition_type state {$$={type: 'addTransition', from: $1, to: $3}}
   ;
 

@@ -1,8 +1,18 @@
 .state {
+  text-align: center;
+
   rect {
     fill: $nodeBkg;
     stroke: $nodeBorder;
   }
+}
+
+.state__name {
+  border-bottom: 1px solid $nodeBorder;
+}
+
+.state__description {
+  font-size: 0.8em;
 }
 
 .state-diagram {

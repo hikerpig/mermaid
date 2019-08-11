@@ -11,6 +11,7 @@ export const LINETYPE = {
 /**
  * @typedef {Object} State
  * @property {String} name
+ * @property {String} description
  */
 
 /**
@@ -43,12 +44,13 @@ function formStateId (name) {
   return [...stateStack, name].join(STATE_NAME_DELIMITER)
 }
 
-export const addState = function (name) {
+export const addState = function (name, desc) {
   const id = formStateId(name)
-  // console.log('addState', id, name)
+  // console.log(`addState id: ${id}`, name, desc)
   const old = states[id]
-  if (old && name === old.name) return
-  states[id] = { name }
+  if (old && name === old.name && desc === old.description) return
+  const description = desc || (old ? old.description : '')
+  states[id] = { name, description }
 }
 
 export const getStates = function () {
@@ -74,7 +76,7 @@ export const apply = function (param) {
   } else {
     switch (param.type) {
       case 'addState':
-        addState(param.name)
+        addState(param.name, param.description)
         break
       case 'addTransition':
         addTransition(param.from, param.to, param.description)

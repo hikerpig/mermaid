@@ -54,7 +54,11 @@ function insertArrowHead (elem) {
 function drawState (diagram, id, state) {
   const stateInfo = {
     id,
-    label: state.name,
+    labelType: 'html',
+    label: `<div>
+      <div class="state__name">${state.name}</div>
+      <div class="state__description">${state.description}</div>
+    </div>`,
     class: 'state'
   }
   return stateInfo

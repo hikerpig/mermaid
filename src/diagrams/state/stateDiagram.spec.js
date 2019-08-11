@@ -5,8 +5,15 @@ import stateDb from './stateDb'
 const FIXTURES = {
   simple: `stateDiagram
 
-Idle --> Configuring
-Configuring --> Idle : EvConfig
+  Idle --> Configuring
+  Configuring --> Idle : EvConfig
+  `,
+  withDescription: `stateDiagram
+
+  A: This is state a
+  B: This is state b
+
+  A --> B
   `
 }
 
@@ -24,6 +31,13 @@ describe('when parsing a stateDiagram', function () {
     const transitions = parser.yy.getTransitions()
     expect(transitions[0]).toMatchObject({ from: 'Configuring', to: 'Idle', description: 'EvConfig' })
     expect(transitions[1]).toMatchObject({ from: 'Idle', to: 'Configuring' })
+  })
+
+  it('it should extract state description', function () {
+    parser.parse(FIXTURES.withDescription)
+    const states = parser.yy.getStates()
+    expect(states.A.description).toBe('This is state a')
+    expect(states.B.description).toBe('This is state b')
   })
 
   it('it should handle a composite state', function () {
