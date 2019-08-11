@@ -1,7 +1,14 @@
 /* eslint-env jasmine */
 import { parser } from './parser/stateDiagram'
 import stateDb from './stateDb'
-// import renderer from './stateRenderer'
+
+const FIXTURES = {
+  simple: `stateDiagram
+
+Idle --> Configuring
+Configuring --> Idle : EvConfig
+  `
+}
 
 describe('when parsing a stateDiagram', function () {
   beforeEach(function () {
@@ -9,13 +16,7 @@ describe('when parsing a stateDiagram', function () {
     parser.yy.clear()
   })
   it('it should handle a stateDiagram definition', function () {
-    const str = `stateDiagram
-
-  Idle --> Configuring
-  Configuring --> Idle : EvConfig
-    `
-
-    parser.parse(str)
+    parser.parse(FIXTURES.simple)
     const states = parser.yy.getStates()
     expect(states.Idle.name).toBe('Idle')
     expect(states.Configuring.name).toBe('Configuring')

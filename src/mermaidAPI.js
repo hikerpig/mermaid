@@ -31,6 +31,9 @@ import gitGraphAst from './diagrams/git/gitGraphAst'
 import infoRenderer from './diagrams/info/infoRenderer'
 import infoParser from './diagrams/info/parser/info'
 import infoDb from './diagrams/info/infoDb'
+import stateRenderer from './diagrams/state/stateRenderer'
+import stateParser from './diagrams/state/parser/stateDiagram'
+import stateDb from './diagrams/state/stateDb'
 
 const themes = {}
 for (const themeName of ['default', 'forest', 'dark', 'neutral']) {
@@ -306,6 +309,10 @@ function parse (text) {
       parser = infoParser
       parser.parser.yy = infoDb
       break
+    case 'state':
+      parser = stateParser
+      parser.parser.yy = stateDb
+      break
   }
 
   parser.parser.yy.parseError = (str, hash) => {
@@ -481,6 +488,9 @@ const render = function (id, txt, cb, container) {
       config.class.arrowMarkerAbsolute = config.arrowMarkerAbsolute
       infoRenderer.setConf(config.class)
       infoRenderer.draw(txt, id, pkg.version)
+      break
+    case 'state':
+      stateRenderer.draw(txt, id)
       break
   }
 

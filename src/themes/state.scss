@@ -1,0 +1,11 @@
+.state {
+  rect {
+    fill: $nodeBkg;
+    stroke: $nodeBorder;
+  }
+}
+
+.state-diagram {
+  .edgeLabel .label {
+  }
+}

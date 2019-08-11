@@ -41,6 +41,10 @@ export const detectType = function (text) {
     return 'info'
   }
 
+  if (text.match(/^\s*stateDiagram/)) {
+    return 'state'
+  }
+
   return 'flowchart'
 }
 
