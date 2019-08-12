@@ -10,6 +10,7 @@ export const LINETYPE = {
 
 /**
  * @typedef {Object} State
+ * @property {String} id
  * @property {String} name
  * @property {String} description
  */
@@ -50,11 +51,23 @@ export const addState = function (name, desc) {
   const old = states[id]
   if (old && name === old.name && desc === old.description) return
   const description = desc || (old ? old.description : '')
-  states[id] = { name, description }
+  states[id] = { name, description, id }
 }
 
 export const getStates = function () {
   return states
+}
+
+/**
+ * get parent state id
+ * @param {State} state
+ * @return {String|null}
+ */
+export const getParentStateId = function (state) {
+  const segs = state.id.split(STATE_NAME_DELIMITER)
+  segs.pop()
+  if (!segs.length) return null
+  return segs.join(STATE_NAME_DELIMITER)
 }
 
 export const addTransition = function (from, to, description) {

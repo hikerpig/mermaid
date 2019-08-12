@@ -5,7 +5,7 @@ import dagreD3 from 'dagre-d3-renderer'
 
 import { logger } from '../../logger'
 import { parser } from './parser/stateDiagram'
-import stateDb from './stateDb'
+import stateDb, { getParentStateId } from './stateDb'
 
 parser.yy = stateDb
 
@@ -49,16 +49,18 @@ function insertArrowHead (elem) {
 
 /**
  * Draw state box
- * TODO: children ?
  */
 function drawState (diagram, id, state) {
+  // console.log('drawState', id, state)
   const stateInfo = {
     id,
+    // label: state.name,
     labelType: 'html',
     label: `<div>
       <div class="state__name">${state.name}</div>
       <div class="state__description">${state.description}</div>
     </div>`,
+    clusterLabelPos: 'top',
     class: 'state'
   }
   return stateInfo
@@ -89,7 +91,7 @@ export const draw = function (text, id) {
   const graph = new graphlib.Graph({
     directed: true,
     compound: true,
-    multigraph: false
+    multigraph: true
   })
 
   // Set an object for the graph label
@@ -97,15 +99,40 @@ export const draw = function (text, id) {
     isMultiGraph: true
   })
 
-  const stateKeys = Object.keys(states)
+  const stateKeys = Object.keys(states).sort((a, b) => { return a.length - b.length })
+  const stateInfoCache = {}
   for (let i = 0; i < stateKeys.length; i++) {
     const key = stateKeys[i]
     const state = states[key]
     const stateInfo = drawState(diagram, key, state)
     graph.setNode(key, stateInfo)
+
+    const parentId = getParentStateId(state)
+    const parentInfo = parentId ? stateInfoCache[parentId] : null
+    if (parentInfo) {
+      if (!parentInfo.children) parentInfo.children = []
+      parentInfo.children.push(stateInfo)
+      graph.setParent(key, parentInfo.id)
+    }
+
+    stateInfoCache[key] = stateInfo
   }
 
+  // Due to draw edge error in compound, https://github.com/dagrejs/dagre-d3/issues/319
+  // needs to draw edges after dagre rendering done
+  const extraEdgeInfos = []
+
   transitions.forEach(transition => {
+    const fromInfo = stateInfoCache[transition.from]
+    const toInfo = stateInfoCache[transition.to]
+    if ((fromInfo && toInfo) && (fromInfo.children || toInfo.children)) {
+      extraEdgeInfos.push({
+        transition,
+        fromInfo,
+        toInfo
+      })
+      return
+    }
     graph.setEdge(transition.from, transition.to, {
       id: [transition.from, transition.to].join('-'),
       class: 'state__line',
@@ -114,8 +141,6 @@ export const draw = function (text, id) {
       arrowhead: 'normal'
     })
   })
-
-  dagre.layout(graph)
 
   graph.nodes().forEach(function (id) {
     const node = graph.node(id)
@@ -134,6 +159,9 @@ export const draw = function (text, id) {
   // Run the renderer. This is what draws the final graph.
   const element = d3.select('#' + id + ' g').attr('class', 'state-diagram')
   renderGraph(element, graph)
+
+  extraEdgeInfos.forEach(({ transition, fromInfo, toInfo }) => {
+  })
 
   const diagramBox = diagram.node().getBBox()
   diagram.attr('height', '100%')

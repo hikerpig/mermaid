@@ -18,4 +18,11 @@
 .state-diagram {
   .edgeLabel .label {
   }
+
+  .cluster {
+    rect {
+      fill: $nodeBkg;
+      stroke: $nodeBorder;
+    }
+  }
 }
