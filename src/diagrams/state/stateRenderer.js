@@ -47,6 +47,16 @@ function insertArrowHead (elem) {
     .attr('d', 'M 0,0 V 4 L6,2 Z') // this is actual shape for arrowhead
 }
 
+function createLine (edge, points) {
+  const line = d3.line()
+    .x(function (d) { return d.x })
+    .y(function (d) { return d.y })
+
+  line.curve(edge.curve || d3.curveLinear)
+
+  return line(points)
+}
+
 /**
  * Draw state box
  */
@@ -54,6 +64,7 @@ function drawState (diagram, id, state) {
   // console.log('drawState', id, state)
   const stateInfo = {
     id,
+    elementId: formatElementId(id),
     // label: state.name,
     labelType: 'html',
     label: `<div>
@@ -75,6 +86,8 @@ export const draw = function (text, id) {
   parser.yy.clear()
   parser.parse(text + '\n')
 
+  window.d3 = d3
+
   const diagram = d3.select(`[id='${id}']`)
 
   // setup some elements
@@ -93,8 +106,6 @@ export const draw = function (text, id) {
     compound: true,
     multigraph: true
   })
-
-  // Set an object for the graph label
   graph.setGraph({
     isMultiGraph: true
   })
@@ -118,7 +129,7 @@ export const draw = function (text, id) {
     stateInfoCache[key] = stateInfo
   }
 
-  // Due to draw edge error in compound, https://github.com/dagrejs/dagre-d3/issues/319
+  // Due to draw edge error while in composite node, https://github.com/dagrejs/dagre-d3/issues/319
   // needs to draw edges after dagre rendering done
   const extraEdgeInfos = []
 
@@ -145,7 +156,7 @@ export const draw = function (text, id) {
   graph.nodes().forEach(function (id) {
     const node = graph.node(id)
     if (id && typeof node !== 'undefined') {
-      d3.select('#' + formatElementId(id)).attr(
+      d3.select('#' + node.elementId).attr(
         'transform',
         'translate(' +
           (node.x - node.width / 2) +
@@ -160,7 +171,33 @@ export const draw = function (text, id) {
   const element = d3.select('#' + id + ' g').attr('class', 'state-diagram')
   renderGraph(element, graph)
 
+  console.log('element', element)
+  // const outerLines = d3.create('g').attr('class', 'outerLines')
+  const outerLines = element.select('g')
+    .append('g')
+    .attr('class', 'outerLines')
+
   extraEdgeInfos.forEach(({ transition, fromInfo, toInfo }) => {
+    const fromBox = element.select(`#${fromInfo.elementId}`).node(0).getBBox()
+    const toBox = element.select(`#${toInfo.elementId}`).node(0).getBBox()
+    const fromCenter = { x: fromInfo.x, y: fromInfo.y }
+    const toCenter = { x: toInfo.x, y: toInfo.y }
+    const tangent = (toCenter.y - fromCenter.y ) / (toCenter.x - fromCenter.x)
+
+    const lineFromX = fromCenter.x + fromBox.width * 0.5 * (toCenter.x > fromCenter.x ? 1: -1)
+    const lineFromY = fromCenter.y + tangent * (lineFromX - fromCenter.x)
+    const lineFrom = { x: lineFromX, y: lineFromY }
+
+    const lineToX = toCenter.x + toBox.width * 0.5 * (toCenter.x > fromCenter.x ? -1: 1)
+    const lineToY = fromCenter.y + tangent * (lineToX - fromCenter.x)
+    const lineTo = { x: lineToX, y: lineToY }
+    const line = createLine({}, [lineFrom, lineTo])
+    outerLines
+      .append('g').attr('class', 'edgePath')
+      .append('path')
+      .attr('class', 'path')
+      .attr('d', line)
+    // console.log('fromEle', fromEle)
   })
 
   const diagramBox = diagram.node().getBBox()
